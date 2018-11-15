@@ -371,9 +371,10 @@ def train(epoch):
     #for batch_idx, (data, target) in enumerate(train_loader):
     batch_idx = 0
     batch_size = 100
-    while(batch_idx < train_loader.__len__()/batch_size):
+    ita_num = len(train_loader.dataset)/batch_size
+    while(batch_idx < ita_num):
         batch_idx = batch_idx + 1
-        #print("batch-idx: ",batch_idx)
+        #print("epoch:",epoch,"batch-idx: ",batch_idx)
         data,target = load_data_cross(batch_size = batch_size)
        # print(data.size(),target.size())
         if use_cuda:
@@ -385,7 +386,7 @@ def train(epoch):
         loss = criterion(output, target)
         loss.backward()
         optimizer.step()
-        if batch_idx % 50 == 0:
+        if batch_idx % 5 == 0:
             end = time()
             print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
                 epoch, batch_idx * len(data), len(train_loader.dataset),
