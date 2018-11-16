@@ -298,7 +298,7 @@ class Net(nn.Module):
         x = self.fc1(x)
 
         #return x
-def load_data_cross(batch_size=200):
+def load_data_cross(batch_size=200,data_source=train_data):
     global global_point
     #print('globale_point: ',global_point)
     data=[]
@@ -307,13 +307,13 @@ def load_data_cross(batch_size=200):
     block_count = 0
     tempblock = []
     tempblock2 = []
-    data_id, tempdata,templabel=train_data.__getitem__(global_point)
+    data_id, tempdata,templabel=data_source.__getitem__(global_point)
     pre_id = data_id
     tempblock.append(tempdata)
     tempblock2.append(templabel)
     count = count + 1
     while(1):
-        data_id, tempdata,templabel = train_data.__getitem__(global_point)
+        data_id, tempdata,templabel = data_source.__getitem__(global_point)
         if(data_id>pre_id and count<20):#not enough img
             tempblock.append(tempdata)
             tempblock2.append(templabel)
@@ -375,7 +375,7 @@ def train(epoch):
     while(batch_idx < ita_num):
         batch_idx = batch_idx + 1
         #print("epoch:",epoch,"batch-idx: ",batch_idx)
-        data,target = load_data_cross(batch_size = batch_size)
+        data,target = load_data_cross(batch_size = batch_size,data_source = train_data)
        # print(data.size(),target.size())
         if use_cuda:
             data, target = data.cuda(), target.cuda()
@@ -450,9 +450,9 @@ def visualize_stn(num):
     #for data,aim in test_loader:
     batch_idx = 0
     batch_size = 30
-    while(batch_idx < test_loader.__len__()/batch_size):
+    while(batch_idx < len(train_loader.dataset)/batch_size):
         batch_idx = batch_idx + 1
-        data,aim = load_data_cross(batch_size=batch_size)
+        data,aim = load_data_cross(batch_size=batch_size,data_source = test_data)
         data = Variable(data, volatile=True)
 
         aim = Variable(aim)
@@ -505,15 +505,19 @@ global_point = 0
 model = Net(BasicBlock,[2,2,2,2])
 if use_cuda:
     model.cuda()
-
-
-optimizer = optim.SGD(model.parameters(), lr=0.01)
-
+pretrained_file = 'model/STN_gei150.pkl'
+model = torch.load(pretrained_file)
+for i,p in enumerate(model.parameters()):
+    if i>=10:
+        p.requires_grad = False
+print(list(model.state_dict().keys())[10:], len(model.state_dict().keys()))
+optimizer = optim.SGD(filter(lambda p: p.requires_grad,model.parameters()), lr=0.01)
+model.eval()
 writer = SummaryWriter()
 start = time()
-
-for epoch in range(1, 200 + 1):
-    train(epoch)
+#
+#for epoch in range(1, 150 + 1):
+#    train(epoch)
     #test()
 
 # 在一些输入批次中可视化空间转换网络 (STN) 的转换
